@@ -1,0 +1,10 @@
+- name: server
+  hosts: all
+  become: True
+  tasks:
+    - name: create user
+      user:
+        name: "webapp"
+        groups: users
+        shell: /bin/bash
+
