@@ -28,7 +28,7 @@ resource "tls_private_key" "example" {
 
 resource "aws_key_pair" "deploy" {
   key_name   = var.project_name
-  public_key = tls_private_key.example.public_key_openssh
+  public_key = file("${path.module}/files/key_rsa.pub")
 }
 
 data "aws_ami" "ubuntu" {
