@@ -1,0 +1,12 @@
+version: "3.7"
+
+services:
+  web:
+    image: tutum/hello-world
+    ports:
+      - 5000:80
+
+        #	redis:
+        #    image: redis/buster
+        #    ports:
+        #      - 6379:6379

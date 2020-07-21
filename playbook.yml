@@ -1,6 +1,14 @@
 - name: server
   hosts: all
   become: True
+  roles:
+    - role: geerlingguy.pip
+      pip_package: python3-pip
+      pip_install_packages:
+        - name: docker
+        - name: docker-compose
+    - role: geerlingguy.docker
+      docker_install_compose: true
   tasks:
     - name: create user
       user:
@@ -8,3 +16,15 @@
         groups: users
         shell: /bin/bash
 
+    - name: Create a directory if it does not exist
+      file:
+        path: /etc/webapps
+        state: directory
+        mode: '0755'
+    - name: Copy file with owner and permissions
+      copy:
+        src: "docker-compose.yml"
+        dest: "/etc/webapps/docker-compose.yml"
+
+    - docker_compose:
+        project_src: "/etc/webapps"
