@@ -5,6 +5,7 @@ services:
     image: tutum/hello-world
     ports:
       - 5000:80
+    restart: always
 
         #	redis:
         #    image: redis/buster

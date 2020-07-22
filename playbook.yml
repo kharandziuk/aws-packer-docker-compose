@@ -1,9 +1,23 @@
 - name: server
   hosts: all
   become: True
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  pre_tasks:
+    - name: Wait for system to become reachable
+      wait_for_connection:
+
+    - name: Gather facts for first time
+      setup:
+    - apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
   roles:
     - role: geerlingguy.pip
       pip_package: python3-pip
+      pip_executable: pip3
       pip_install_packages:
         - name: docker
         - name: docker-compose
@@ -21,6 +35,7 @@
         path: /etc/webapps
         state: directory
         mode: '0755'
+
     - name: Copy file with owner and permissions
       copy:
         src: "docker-compose.yml"

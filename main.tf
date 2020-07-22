@@ -33,58 +33,69 @@ resource "aws_key_pair" "deploy" {
 
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners = ["099720109477"] # Canonical
+  owners = ["self"]
 
   filter {
-      name   = "name"
-      values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
-  }
-
-  filter {
-      name   = "virtualization-type"
-      values = ["hvm"]
+      name   = "tag:Name"
+      values = ["hello-server"]
   }
 }
 
-resource "aws_security_group" "main" {}
-#  egress = [
-#    {
-#      cidr_blocks      = [ "0.0.0.0/0", ]
-#      description      = ""
-#      from_port        = 0
-#      ipv6_cidr_blocks = []
-#      prefix_list_ids  = []
-#      protocol         = "-1"
-#      security_groups  = []
-#      self             = false
-#      to_port          = 0
-#    }
-#  ]
-# ingress                = [
-#   {
-#     cidr_blocks      = [ "0.0.0.0/0", ]
-#     description      = ""
-#     from_port        = 22
-#     ipv6_cidr_blocks = []
-#     prefix_list_ids  = []
-#     protocol         = "tcp"
-#     security_groups  = []
-#     self             = false
-#     to_port          = 22
-#  },
-#   {
-#     cidr_blocks      = [ "0.0.0.0/0", ]
-#     description      = ""
-#     from_port        = 5000
-#     ipv6_cidr_blocks = []
-#     prefix_list_ids  = []
-#     protocol         = "tcp"
-#     security_groups  = []
-#     self             = false
-#     to_port          = 5000
-#  }
-#  ]
-# }
+resource "aws_security_group" "main" {
+  egress = [
+  {
+    cidr_blocks      = [ "0.0.0.0/0", ]
+    description      = ""
+    from_port        = 0
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    protocol         = "-1"
+    security_groups  = []
+    self             = false
+    to_port          = 0
+  }
+  ]
+  ingress                = [
+ {
+   cidr_blocks      = [ "0.0.0.0/0", ]
+   description      = ""
+   from_port        = 22
+   ipv6_cidr_blocks = []
+   prefix_list_ids  = []
+   protocol         = "tcp"
+   security_groups  = []
+   self             = false
+   to_port          = 22
+},
+ {
+   cidr_blocks      = [ "0.0.0.0/0", ]
+   description      = ""
+   from_port        = 5000
+   ipv6_cidr_blocks = []
+   prefix_list_ids  = []
+   protocol         = "tcp"
+   security_groups  = []
+   self             = false
+   to_port          = 5000
+}
+]
+}
+
+locals {
+  ansible_command_engine = "ansible-playbook -i ${aws_instance.example.public_dns}, --user ubuntu --private-key files/key_rsa playbook.yml"
+}
+
+resource "null_resource" "engine_ansible" {
+
+  provisioner "local-exec" {
+    command = local.ansible_command_engine
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING="False"
+    }
+  }
+
+}
+
 
 resource "aws_instance" "example" {
   ami           = data.aws_ami.ubuntu.id
@@ -96,4 +107,8 @@ resource "aws_instance" "example" {
   }
 
   vpc_security_group_ids = [aws_security_group.main.id]
+}
+
+output "command" {
+  value = "ansible-playbook -i ${aws_instance.example.public_dns}, --user ubuntu --private-key files/key_rsa playbook.yml"
 }
