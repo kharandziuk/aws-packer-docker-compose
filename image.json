@@ -1,0 +1,53 @@
+{
+  "variables": {
+    "aws_access_key": "{{ env `AWS_ACCESS_KEY` }}",
+    "aws_secret_key": "{{ env `AWS_SECRET_KEY` }}",
+    "aws_region": "{{ env `AWS_REGION` }}",
+    "pwd": "{{env `PWD`}}"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "{{user `aws_region`}}",
+    "instance_type": "t3.small",
+    "associate_public_ip_address": true,
+    "ami_name": "ubuntu hello world server {{timestamp}}",
+    "ssh_username": "ubuntu",
+    "source_ami_filter": {
+      "filters": {
+        "virtualization-type": "hvm",
+        "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
+      },
+      "owners": ["099720109477"],
+      "most_recent": true
+    },
+    "tags": {
+      "Name": "hello-server"
+    }
+  }],
+  "provisioners": [
+    {
+        "type": "shell",
+        "inline": " sudo apt update"
+    },
+    {
+        "type": "shell",
+        "inline": "sudo apt install --yes software-properties-common"
+    },
+    {
+        "type": "shell",
+        "inline": "sudo apt-add-repository --yes --update ppa:ansible/ansible"
+    },
+    {
+        "type": "shell",
+        "inline": "sudo apt install --yes ansible"
+    },
+    {
+        "type": "ansible",
+        "user": "ubuntu",
+        "playbook_file": "playbook.yml",
+        "extra_arguments": [ "-e 'ansible_python_interpreter=/usr/bin/python3'"]
+    }
+  ]
+}
