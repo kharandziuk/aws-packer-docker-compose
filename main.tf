@@ -39,56 +39,74 @@ data "aws_ami" "ubuntu" {
       name   = "tag:Name"
       values = ["hello-server"]
   }
+
+  depends_on=[
+    null_resource.packer_build
+  ]
 }
 
 resource "aws_security_group" "main" {
   egress = [
-  {
-    cidr_blocks      = [ "0.0.0.0/0", ]
-    description      = ""
-    from_port        = 0
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    protocol         = "-1"
-    security_groups  = []
-    self             = false
-    to_port          = 0
-  }
+    {
+      cidr_blocks      = [ "0.0.0.0/0", ]
+      description      = ""
+      from_port        = 0
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      protocol         = "-1"
+      security_groups  = []
+      self             = false
+      to_port          = 0
+    }
   ]
   ingress                = [
- {
-   cidr_blocks      = [ "0.0.0.0/0", ]
-   description      = ""
-   from_port        = 22
-   ipv6_cidr_blocks = []
-   prefix_list_ids  = []
-   protocol         = "tcp"
-   security_groups  = []
-   self             = false
-   to_port          = 22
-},
- {
-   cidr_blocks      = [ "0.0.0.0/0", ]
-   description      = ""
-   from_port        = 5000
-   ipv6_cidr_blocks = []
-   prefix_list_ids  = []
-   protocol         = "tcp"
-   security_groups  = []
-   self             = false
-   to_port          = 5000
-}
-]
+    {
+      cidr_blocks      = [ "0.0.0.0/0", ]
+      description      = ""
+      from_port        = 22
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      protocol         = "tcp"
+      security_groups  = []
+      self             = false
+      to_port          = 22
+    },
+    {
+      cidr_blocks      = [ "0.0.0.0/0", ]
+      description      = ""
+      from_port        = 5000
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      protocol         = "tcp"
+      security_groups  = []
+      self             = false
+      to_port          = 5000
+    }
+  ]
 }
 
 locals {
-  ansible_command_engine = "ansible-playbook -i ${aws_instance.example.public_dns}, --user ubuntu --private-key files/key_rsa playbook.yml"
+  packer_build_command = "packer build image.json"
+  ansible_command = "ansible-playbook -i ${aws_instance.example.public_dns}, --user ubuntu --private-key files/key_rsa playbook.yml"
+}
+
+resource "null_resource" "packer_build" {
+
+  provisioner "local-exec" {
+    command = local.packer_build_command
+    environment = {
+      AWS_REGION=var.aws_region
+      AWS_ACCESS_KEY=var.aws_access_key
+      AWS_SECRET_KEY=var.aws_secret_key
+    }
+  }
+
 }
 
 resource "null_resource" "engine_ansible" {
 
   provisioner "local-exec" {
-    command = local.ansible_command_engine
+    command = local.ansible_command
     environment = {
       ANSIBLE_HOST_KEY_CHECKING="False"
     }
